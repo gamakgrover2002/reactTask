@@ -1,77 +1,100 @@
-import { useForm } from "react-hook-form";
-
+import { useForm, Controller } from "react-hook-form";
+import Input from "./customehook/Input";
 function Form() {
-  const { register, handleSubmit, formState } = useForm();
+  const { register, handleSubmit, formState, control } = useForm();
   const { errors } = formState;
-
   const onSubmit = (data) => {
-    console.log(data);
     alert("Form submitted");
   };
 
   return (
-    <>
+    <div id="container">
       <form className="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <input
-          {...register("name", {
-            required: "Name is required",
-          })}
-          type="text"
+        <Input
           className="input-field"
+          register={register}
+          error={errors.name?.message}
+          type="text"
           placeholder="Name"
+          name="name"
+          rule={{
+            required: {
+              value: true,
+              message: "name is Required",
+            },
+          }}
         />
-        <p className="error-message">{errors.name?.message}</p>
-        <br />
-
-        <input
-          type="text"
-          placeholder="Date of Birth"
-          onFocus={(e) => (e.target.type = "date")}
-          onBlur={(e) => (e.target.type = "text")}
-          {...register("dateOfBirth", {
-            required: "Date of birth is required",
-          })}
+        <Input
           className="input-field"
-        />
-        <p className="error-message">{errors.dateOfBirth?.message}</p>
-        <br />
-
-        <input
-          id="email-input"
-          {...register("email", {
-            required: "Email is required",
-          })}
-          className="input-field"
-          type="email"
-          placeholder="Email"
-        />
-        <p className="error-message">{errors.email?.message}</p>
-        <br />
-
-        <input
-          id="contact-input"
-          {...register("contact", {
-            required: "Contact is required",
-            minLength: {
-              value: 10,
-              message: "Incorrect number: number too short",
+          register={register}
+          error={errors.contact?.message}
+          type="number"
+          placeholder="Contact"
+          name="contact"
+          rule={{
+            required: {
+              value: true,
+              message: "contact is Required",
             },
             maxLength: {
               value: 10,
-              message: "Incorrect number: number too long",
+              message: "Number should be 10 digit long",
             },
-          })}
-          className="input-field"
-          type="number"
-          placeholder="Contact"
+            minLength: {
+              value: 10,
+              message: "Number should be 10 digit long",
+            },
+          }}
         />
-        <p className="error-message">{errors.contact?.message}</p>
+        <Input
+          className="input-field"
+          register={register}
+          error={errors.email?.message}
+          type="email"
+          placeholder="email"
+          name="email"
+          rule={{
+            required: {
+              value: true,
+              message: "email is Required",
+            },
+          }}
+        />
         <br />
-
+        <div id="gender-input">
+          <>
+            <Input
+              className="radio-btn"
+              register={register}
+              type="radio"
+              value="Male"
+              name="gender"
+              rule={{
+                required: {
+                  value: true,
+                  message: "gender is Required",
+                },
+              }}
+            />
+            Male
+          </>
+          <>
+            <Input
+              className="radio-btn"
+              register={register}
+              type="radio"
+              value="Female"
+              name="gender"
+            />
+            Female
+          </>
+        </div>
+        <p className="error-message">{errors.gender?.message}</p>
+        <br />
         <button type="submit">SUBMIT</button>
         <h6>This form uses useForm hook</h6>
       </form>
-    </>
+    </div>
   );
 }
 

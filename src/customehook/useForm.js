@@ -1,48 +1,80 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const useForm = (initialValues) => {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setValues((prevValues) => ({ ...prevValues, [name]: value }));
+  const validate = (value, options) => {
+    let errorMessage = "";
+
+    if (options?.required && !value) {
+      errorMessage = options?.message || "This field is required";
+    } else if (options?.pattern && !options.pattern.value.test(value)) {
+      errorMessage = options.pattern.message || "Invalid format";
+    } else if (options?.minLength && value.length < options.minLength.value) {
+      errorMessage =
+        options.minLength.message ||
+        `Minimum length is ${options.minLength.value}`;
+    } else if (options?.maxLength && value.length > options.maxLength.value) {
+      errorMessage =
+        options.maxLength.message ||
+        `Maximum length is ${options.maxLength.value}`;
+    } else if (options?.validate) {
+      const customError = options.validate(value);
+      if (customError) {
+        errorMessage = customError;
+      }
+    }
+    return errorMessage;
   };
 
-  const handleBlur = (event) => {
-    const { name } = event.target;
-    setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+  const register = (name, options) => {
+    const onChangeHandler = (e) => {
+      const newValue = e.target.value;
+      setValues((prevValues) => ({ ...prevValues, [name]: newValue }));
+      if (touched[name]) {
+        const errorMessage = validate(newValue, options);
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+      }
+    };
+
+    const onBlurHandler = (e) => {
+      const newValue = e.target.value;
+      setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+      const errorMessage = validate(newValue, options);
+      setErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    };
+
+    return {
+      onChange: onChangeHandler,
+      onBlur: onBlurHandler,
+      name,
+      value: values[name] || "",
+    };
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (Object.keys(errors).length === 0 && Object.keys(touched).length !== 0) {
-      alert("Form submitted");
+  const handleSubmit = (e, fields) => {
+    e.preventDefault();
+    const validationErrors = {};
+    fields.forEach((field) => {
+      const errorMessage = validate(values[field.name], field.options);
+      if (errorMessage) {
+        validationErrors[field.name] = errorMessage;
+      }
+    });
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length === 0) {
+      // No validation errors, handle form submission here
+      console.log("Form submitted successfully:", values);
     } else {
+      // Validation errors exist
+      console.log("Validation errors:", validationErrors);
     }
   };
 
-  useEffect(() => {
-    const validate = () => {
-      const errors = {};
-      if (!values.name) {
-        errors.name = "Name is required";
-      }
-      if (!values.email) {
-        errors.email = "Email is required";
-      } else if (
-        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
-      ) {
-        errors.email = "Invalid email address";
-      }
-
-      setErrors(errors);
-    };
-    validate();
-  }, [values]);
-
-  return { values, errors, touched, handleChange, handleBlur, handleSubmit };
+  return { values, errors, touched, register, handleSubmit };
 };
 
 export default useForm;
